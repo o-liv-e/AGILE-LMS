@@ -1,0 +1,49 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lms-v3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lms-v3
+  template:
+    metadata:
+      labels:
+        app: lms-v3
+    spec:
+      containers:
+        - name: lms
+          image: oliveprishita/lms:v3
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "v3"
+          volumeMounts:
+            - name: notes
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: notes
+          persistentVolumeClaim:
+            claimName: lms-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lms-v3-service
+spec:
+  type: ClusterIP
+  selector:
+    app: lms-v3
+  ports:
+    - port: 80
+      targetPort: 5000
