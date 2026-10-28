@@ -39,7 +39,7 @@ pipeline {
                 bat 'docker build -t %IMAGE_NAME%:%VERSION% .'
             }
         }
-
+        
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -47,11 +47,17 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-                    bat 'echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push %IMAGE_NAME%:%VERSION%'
-                    bat 'docker logout'
+                    bat '''
+                        @echo off
+                        powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin"
+                        if errorlevel 1 exit /b 1
+                        docker push %IMAGE_NAME%:%VERSION%
+                        if errorlevel 1 exit /b 1
+                        docker logout
+                    '''
                 }
             }
         }
+
     }
 }
