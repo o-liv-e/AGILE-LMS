@@ -14,17 +14,19 @@ pipeline {
         IMAGE_NAME = 'oliveprishita/lms'
     }
 
-    stage('Checkout Selected Version') {
-    steps {
-        checkout([
-            $class: 'GitSCM',
-            branches: [[name: "*/${params.VERSION}"]],
-            userRemoteConfigs: [[
-                url: 'https://github.com/o-liv-e/AGILE-LMS.git'
-            ]]
-        ])
-    }
-}
+    stages {
+        stage('Checkout Selected Version') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.VERSION}"]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/o-liv-e/AGILE-LMS.git'
+                    ]]
+                ])
+            }
+        }
+
         stage('Test') {
             steps {
                 bat 'python -m pip install -r requirements.txt'
