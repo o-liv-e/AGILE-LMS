@@ -16,23 +16,18 @@ spec:
       containers:
         - name: lms
           image: oliveprishita/lms:v1
-          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
             - name: APP_VERSION
               value: "v1"
+            - name: LMS_DATA_DIR
+              value: /data
           volumeMounts:
-            - name: notes
+            - name: notes-storage
               mountPath: /data
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 5
       volumes:
-        - name: notes
+        - name: notes-storage
           persistentVolumeClaim:
             claimName: lms-data
 ---
@@ -41,9 +36,10 @@ kind: Service
 metadata:
   name: lms-v1-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: lms-v1
   ports:
-    - port: 80
+    - port: 5000
       targetPort: 5000
+      nodePort: 30081
