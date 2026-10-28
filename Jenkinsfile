@@ -2,11 +2,26 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'VERSION',
+            choices: ['v1', 'v2', 'v3'],
+            description: 'Select the LMS version to build'
+        )
+    }
+
     environment {
         IMAGE_NAME = 'oliveprishita/lms'
     }
 
     stages {
+        stage('Checkout Selected Version') {
+            steps {
+                git branch: "*/${params.VERSION}",
+                    url: 'https://github.com/o-liv-e/AGILE-LMS.git'
+            }
+        }
+
         stage('Test') {
             steps {
                 bat 'python -m pip install -r requirements.txt'
@@ -16,13 +31,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    if (!(env.BRANCH_NAME in ['v1', 'v2', 'v3'])) {
-                        error('Build only from v1, v2, or v3 branches')
-                    }
-                }
-
-                bat 'docker build -t %IMAGE_NAME%:%BRANCH_NAME% .'
+                bat 'docker build -t %IMAGE_NAME%:%VERSION% .'
             }
         }
 
@@ -34,7 +43,7 @@ pipeline {
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
                     bat 'echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push %IMAGE_NAME%:%BRANCH_NAME%'
+                    bat 'docker push %IMAGE_NAME%:%VERSION%'
                     bat 'docker logout'
                 }
             }
